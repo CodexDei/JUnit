@@ -3,8 +3,12 @@ package org.codexdei.junit5app.models;
 import org.codexdei.junit5app.exceptions.InsufficientFundsException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.*;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -322,4 +326,74 @@ class AccountTest {
         //lo siguiente es lo mismo que el anterior pero usando True, para ello hay que inventir el operador de relacion
         assertTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0, () -> "Custom Error Message: The balance cannot be negative");
     }
+
+    @DisplayName("testing Debit Account Repeat")
+    //Repite el test el numero de veces que se le indique
+    //'{currentRepetition}': numero de repeticion '{totalRepetitions}' el valor total de repeticiones'
+    @RepeatedTest(value = 5, name = "{displayName} - Repetition number {currentRepetition} of {totalRepetitions}")
+        //se usa 'RepetitionInfo' para usar la variable para alguna operacion en el metodo
+    void testDebitAccountRepeat(RepetitionInfo info) {
+        //usamos la variable para mostrar un mensaje en la repeticion 3
+        if (info.getCurrentRepetition() == 3) {
+            System.out.println("We are in the repetition number: " + info.getCurrentRepetition());
+        }
+
+        account.debit(new BigDecimal(100));
+        assertNotNull(account.getBalance());
+        assertEquals(900, account.getBalance().intValue());
+        assertEquals("900.12345", account.getBalance().toPlainString());
+    }
+
+    //Permite ejecutar el test con diferentes valores
+    //se usa juntamente con '@ValueSource', '@CsvSource', @CsvFileSource, @EnumSource, @MethodSource, @ArgumentsSource,etc
+    @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+    //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+    @ValueSource(strings = {"100", "200", "300", "500", "1000", "1000.12345", "2000"})
+    void testDebitAccountValueSource(String amount) {
+
+        account.debit(new BigDecimal(amount));
+        assertNotNull(account.getBalance());
+        assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+    }
+
+    @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+    //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+    @CsvSource({"1,100", "2,200", "3,300", "4,500", "5,1000", "6,1000.12345", "7,2000"})
+    void testDebitAccountCsvSource(String index, String amount) {
+
+        System.out.println(index + " -> " + amount);
+        account.debit(new BigDecimal(amount));
+        assertNotNull(account.getBalance());
+        assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+    }
+
+    @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+    //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+    //Permite usar un archivo que contiene los datos de prueba, debe estar en la carpeta resources del proyecto
+    @CsvFileSource(resources = "/data.csv")
+    void testDebitAccountCsvFileSources(String index, String amount) {
+
+        System.out.println(index + " -> " + amount);
+        account.debit(new BigDecimal(amount));
+        assertNotNull(account.getBalance());
+        assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+    }
+
+    @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+    //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+    //Permite usar un archivo que contiene los datos de prueba, debe estar en la carpeta resources del proyecto
+    @MethodSource("amountList")
+    void testDebitAccountMethodSource(String amount) {
+
+        account.debit(new BigDecimal(amount));
+        assertNotNull(account.getBalance());
+        assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+    }
+
+    static List<String> amountList() {
+
+        return Arrays.asList("100", "200", "300", "500", "1000", "1000.12345", "2000");
+    }
+
+
 }
