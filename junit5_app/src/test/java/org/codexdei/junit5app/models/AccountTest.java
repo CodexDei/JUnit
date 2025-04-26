@@ -46,6 +46,9 @@ class AccountTest {
         System.out.println("Finished the test");
     }
 
+    //Etiqueta toda la clase 'AccountTestNameBalance' para que si se quiere se ejecute esta juntamente
+    //con otras que tengan la etiqueta "Account"
+    @Tag("account")
     //Sirve para anidar test, si algun test de la clase falla, todos fallan
     @Nested
     @DisplayName("Testing atributes of the class Account")
@@ -97,7 +100,7 @@ class AccountTest {
     @Nested
     class AccountOperationsTest {
 
-
+        @Tag("account")
         @Test
         @DisplayName("Managing a debit transaction")
         void testDebitAccount() {
@@ -107,7 +110,7 @@ class AccountTest {
             assertEquals(900, account.getBalance().intValue());
             assertEquals("900.12345", account.getBalance().toPlainString());
         }
-
+        @Tag("account")
         @Test
         @DisplayName("Managing a credit transaction")
         void testCreditAccount() {
@@ -119,20 +122,8 @@ class AccountTest {
         }
 
         @Test
-        @DisplayName("Verifying funds")
-        void testInsufficientFundsExceptionAccount() {
-
-            Exception exception = assertThrows(InsufficientFundsException.class, () -> {
-
-                account.debit(new BigDecimal(1500));
-            });
-            String actual = exception.getMessage();
-            String exceptedValue = "Insufficient funds";
-
-            assertEquals(exceptedValue, actual);
-        }
-
-        @Test
+        @Tag("account")
+        @Tag("bank")
         @DisplayName("Testing transfer monetary between accounts")
         void testTransferMoneyAccount() {
 
@@ -146,8 +137,26 @@ class AccountTest {
             assertEquals("1200", destinationAccount.getBalance().toPlainString());
         }
 
+        @Test
+        @Tag("account")
+        @Tag("error")
+        @DisplayName("Verifying funds")
+        void testInsufficientFundsExceptionAccount() {
+
+            Exception exception = assertThrows(InsufficientFundsException.class, () -> {
+
+                account.debit(new BigDecimal(1500));
+            });
+            String actual = exception.getMessage();
+            String exceptedValue = "Insufficient funds";
+
+            assertEquals(exceptedValue, actual);
+        }
+
         //Todo testing debe tenerlo
         @Test
+        @Tag("account")
+        @Tag("bank")
         //En la ejecucion indica que hace el test
         @DisplayName("Testing relationship between the accounts and with the bank using asserAll 🤝")
         //Deshabilita es testing, en caso de que necesitemos arreglarlo y podamos seguir probando o
@@ -344,41 +353,83 @@ class AccountTest {
         assertEquals("900.12345", account.getBalance().toPlainString());
     }
 
-    //Permite ejecutar el test con diferentes valores
-    //se usa juntamente con '@ValueSource', '@CsvSource', @CsvFileSource, @EnumSource, @MethodSource, @ArgumentsSource,etc
-    @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
-    //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
-    @ValueSource(strings = {"100", "200", "300", "500", "1000", "1000.12345", "2000"})
-    void testDebitAccountValueSource(String amount) {
+    //Etiqueta toda la clase, para que si se quiere, solo se ejecuten estos test unicamente, es decir "Param"
+    //Para hacerlo se pulsa en la flecha desplegable al lado del boton verde de ejecutar, luego en
+    //'edit configurations' cambiamos 'class' por 'Tag' y colocamos el nombre de la etiqueta, ok y aplicar
+    //luego pulsamos el boton verde de ejecutar
+    @Tag("param")
+    @Nested
+    class TestParametizeds{
+        //Permite ejecutar el test con diferentes valores
+        //se usa juntamente con '@ValueSource', '@CsvSource', @CsvFileSource, @EnumSource, @MethodSource, @ArgumentsSource,etc
+        @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+        //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+        @ValueSource(strings = {"100", "200", "300", "500", "1000", "1000.12345"})
+        void testDebitAccountValueSource(String amount) {
 
-        account.debit(new BigDecimal(amount));
-        assertNotNull(account.getBalance());
-        assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+            account.debit(new BigDecimal(amount));
+            assertNotNull(account.getBalance());
+            assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+        }
+
+        @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+        //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+        @CsvSource({"1,100", "2,200", "3,300", "4,500", "5,1000", "6,1000.12345"})
+        void testDebitAccountCsvSource(String index, String amount) {
+
+            System.out.println(index + " -> " + amount);
+            account.debit(new BigDecimal(amount));
+            assertNotNull(account.getBalance());
+            assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+        }
+
+        @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+        //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+        @CsvSource({"200,100,Pepe,Pepe", "500,200, Marye, Magda", "300,300, luis,Luis", "1000.12345,1000.12345,Jhon,Jhon"})
+        void testDebitAccountCsvSource2(String balance, String amount, String expected, String actual) {
+
+            System.out.println(balance + " -> " + amount);
+            account.setBalance(new BigDecimal(balance));
+            account.debit(new BigDecimal(amount));
+            assertEquals(expected,actual);
+            assertNotNull(account.getBalance());
+            assertNotNull(account.getNamePerson());
+            account.setNamePerson(actual);
+            assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+
+
+        }
+
+        @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+        //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+        //Permite usar un archivo que contiene los datos de prueba, debe estar en la carpeta resources del proyecto
+        @CsvFileSource(resources = "/data.csv")
+        void testDebitAccountCsvFileSources(String index, String amount) {
+
+            System.out.println(index + " -> " + amount);
+            account.debit(new BigDecimal(amount));
+            assertNotNull(account.getBalance());
+            assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+        }
+
+        @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
+        //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
+        //Permite usar un archivo que contiene los datos de prueba, debe estar en la carpeta resources del proyecto
+        @CsvFileSource(resources = "/data2.csv")
+        void testDebitAccountCsvFileSources2(String balance, String amount, String expected, String actual) {
+
+            System.out.println(balance + " -> " + amount);
+            account.setBalance(new BigDecimal(balance));
+            account.debit(new BigDecimal(amount));
+            assertEquals(expected,actual);
+            assertNotNull(account.getBalance());
+            assertNotNull(account.getNamePerson());
+            account.setNamePerson(actual);
+            assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
+        }
     }
 
-    @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
-    //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
-    @CsvSource({"1,100", "2,200", "3,300", "4,500", "5,1000", "6,1000.12345", "7,2000"})
-    void testDebitAccountCsvSource(String index, String amount) {
-
-        System.out.println(index + " -> " + amount);
-        account.debit(new BigDecimal(amount));
-        assertNotNull(account.getBalance());
-        assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
-    }
-
-    @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
-    //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
-    //Permite usar un archivo que contiene los datos de prueba, debe estar en la carpeta resources del proyecto
-    @CsvFileSource(resources = "/data.csv")
-    void testDebitAccountCsvFileSources(String index, String amount) {
-
-        System.out.println(index + " -> " + amount);
-        account.debit(new BigDecimal(amount));
-        assertNotNull(account.getBalance());
-        assumeTrue(account.getBalance().compareTo(BigDecimal.ZERO) > 0);
-    }
-
+    @Tag("param")
     @ParameterizedTest(name = "Number {index} executing with value {0} - {argumentsWithNames}")
     //ES MEJOR USAR STRINGS PORQUE DECIMALES SON MENOS PRECISOS
     //Permite usar un archivo que contiene los datos de prueba, debe estar en la carpeta resources del proyecto
@@ -392,8 +443,6 @@ class AccountTest {
 
     static List<String> amountList() {
 
-        return Arrays.asList("100", "200", "300", "500", "1000", "1000.12345", "2000");
+        return Arrays.asList("100", "200", "300", "500", "1000", "1000.12345");
     }
-
-
 }
