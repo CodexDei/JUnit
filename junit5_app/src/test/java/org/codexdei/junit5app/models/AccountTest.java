@@ -7,10 +7,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
@@ -22,6 +24,8 @@ import static org.junit.jupiter.api.Assumptions.*;
 class AccountTest {
 
     Account account;
+    TestInfo testInfo;
+    TestReporter testReporter;
 
     @BeforeAll
     static void beforeAll() {
@@ -29,10 +33,17 @@ class AccountTest {
     }
 
     @BeforeEach
-    void initMethodTest() {
+    void initMethodTest(TestInfo testInfo, TestReporter testReporter) {
+
+        this.testInfo = testInfo;
+        this.testReporter = testReporter;
 
         this.account = new Account("Luis", new BigDecimal("1000.12345"));
+
         System.out.println("Starting the method");
+        //Hace que cada metodo muestre el displayName, nombre del metodo y tags
+        testReporter.publishEntry("Executing: '" + testInfo.getDisplayName() + "' Method: '" + testInfo.getTestMethod().orElse(null).getName()
+                + "' with the labels: " + testInfo.getTags());
     }
 
     @AfterEach
@@ -60,8 +71,15 @@ class AccountTest {
         @DisplayName("Holder's name 🤔")
         //Deshabilita es testing, en caso de que necesitemos arreglarlo y podamos seguir probando o
         //saltar test, por si falta arreglar algo y podamos seguir, en la ejecucion mistrara "ignored" y signo gris
-        @Disabled
         void testNameAccount() {
+
+            testReporter.publishEntry("Tags: " + testInfo.getTags());
+
+            if (testInfo.getTags().contains("account")){
+
+                testReporter.publishEntry("print with help of testInfo");
+            }
+
             //Para que falle el metodo
             //fail();
 //        account.setPerson("Pedro");
@@ -444,5 +462,32 @@ class AccountTest {
     static List<String> amountList() {
 
         return Arrays.asList("100", "200", "300", "500", "1000", "1000.12345");
+    }
+
+    @Nested
+    @Tag("timeout")
+    class ExampleTimeOut{
+
+        @Test
+        //Asigna un tiempo a la prueba, sino se especifica la unidad de tiempo, por defecto es segundos
+        @Timeout(1)
+        void testTimeout() throws InterruptedException {
+            TimeUnit.MILLISECONDS.sleep(100);
+        }
+
+        @Test
+        @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
+        void testTimeout2() throws InterruptedException {
+            TimeUnit.MILLISECONDS.sleep(900);
+        }
+
+        @Test
+        void testTimeOutAssertion(){
+
+            assertTimeout(Duration.ofSeconds(5), () -> {
+                TimeUnit.MILLISECONDS.sleep(4000);
+            });
+        }
+
     }
 }
