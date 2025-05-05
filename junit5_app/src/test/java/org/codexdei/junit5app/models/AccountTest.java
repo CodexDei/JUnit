@@ -71,6 +71,7 @@ class AccountTest {
         @DisplayName("Holder's name 🤔")
         //Deshabilita es testing, en caso de que necesitemos arreglarlo y podamos seguir probando o
         //saltar test, por si falta arreglar algo y podamos seguir, en la ejecucion mistrara "ignored" y signo gris
+        //@Disabled
         void testNameAccount() {
 
             testReporter.publishEntry("Tags: " + testInfo.getTags());
@@ -488,6 +489,5 @@ class AccountTest {
                 TimeUnit.MILLISECONDS.sleep(4000);
             });
         }
-
     }
 }
